@@ -61,19 +61,52 @@ PRODUCTOS_DEMO = [
 ]
 
 
-def consultar_inventario(request):
-    codigo = request.GET.get("producto", "P-001")
 
+def consultar_inventario(request):
+    busqueda = request.GET.get("buscar", "").strip()
+    categoria = request.GET.get("categoria", "").strip()
+    codigo = request.GET.get("producto", "").strip()
+
+    productos = PRODUCTOS_DEMO
+
+    # Filtrar por nombre o código
+    if busqueda:
+        productos = [
+            p for p in productos
+            if busqueda.lower() in p["nombre"].lower()
+            or busqueda.lower() in p["codigo"].lower()
+        ]
+
+    # Filtrar por categoría
+    if categoria:
+        productos = [
+            p for p in productos
+            if p["categoria"] == categoria
+        ]
+
+    # Obtener las categorías disponibles
+    categorias = sorted({
+        p["categoria"] for p in PRODUCTOS_DEMO
+    })
+
+    # Seleccionar el producto solicitado
     seleccionado = next(
-        (producto for producto in PRODUCTOS_DEMO if producto["codigo"] == codigo),
+        (p for p in productos if p["codigo"] == codigo),
         None,
     )
+
+    # Si no hay selección, mostrar el primero
+    if seleccionado is None and productos:
+        seleccionado = productos[0]
 
     return render(
         request,
         "inventario/consulta.html",
         {
-            "productos": PRODUCTOS_DEMO,
+            "productos": productos,
             "seleccionado": seleccionado,
+            "categorias": categorias,
+            "busqueda": busqueda,
+            "categoria_actual": categoria,
         },
     )
