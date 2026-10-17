@@ -1,0 +1,497 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | Riza tus Rizos</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #fff;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Menú lateral */
+        .sidebar {
+            width: 210px;
+            flex-shrink: 0;
+            background: #f3f3f3;
+            border-right: 1px solid #ddd;
+            padding: 30px 15px;
+        }
+
+        .sidebar h2 {
+            font-size: 19px;
+            margin-bottom: 35px;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 13px;
+            margin-bottom: 8px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .menu-item.active {
+            background: #dedede;
+        }
+
+        /* Contenido principal */
+        .content {
+            flex: 1;
+            min-width: 0;
+            padding: 35px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 0 0 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 15px;
+        }
+
+        .panel {
+            border: 1px solid #ccc;
+            padding: 20px;
+            min-width: 0;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 21px;
+        }
+
+        /* Buscador y filtros */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .filters input,
+        .filters select {
+            padding: 11px;
+            border: 1px solid #ccc;
+            background: white;
+            min-width: 0;
+            font-size: 14px;
+        }
+
+        .filters input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filters select {
+            width: 180px;
+        }
+
+        .filters button {
+            padding: 11px 15px;
+            background: #e8e8e8;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .filters button:hover {
+            background: #d8d8d8;
+        }
+
+        .filters .clear-link {
+            padding: 11px 5px;
+            color: #333;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+
+        /* Tablas */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 13px 9px;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+            font-weight: 600;
+        }
+
+        .selected-row {
+            background: #f0f0f0;
+        }
+
+        .product-link {
+            color: #222;
+            text-decoration: underline;
+        }
+
+        .product-link:hover {
+            color: #666;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 7px;
+            background: #e8e8e8;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Detalle del producto */
+        .product-info {
+            padding: 10px 0 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .product-info p {
+            color: #555;
+        }
+
+        .stock-summary {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-box {
+            flex: 1;
+            background: #f3f3f3;
+            padding: 15px;
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 26px;
+        }
+
+        .lots-section {
+            margin-top: 30px;
+        }
+
+        .lots-section h3 {
+            font-size: 20px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .empty-message {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Pantallas pequeñas */
+        @media (max-width: 1000px) {
+            .panels {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 155px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .sidebar h2 {
+                margin-bottom: 15px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .stock-summary {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- Menú lateral ilustrativo -->
+    <aside class="sidebar">
+        <h2>Riza tus Rizos</h2>
+
+        <span class="menu-item">Inicio</span>
+        <span class="menu-item active">Inventario</span>
+        <span class="menu-item">Productos</span>
+        <span class="menu-item">Lotes</span>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="content">
+
+        <h1>Inventario</h1>
+        <p class="subtitle">Consultar inventario</p>
+
+        <div class="panels">
+
+            <!-- PANEL IZQUIERDO -->
+            <section class="panel">
+
+                <h2>Productos</h2>
+
+                <!-- Búsqueda y filtros -->
+                <form class="filters" method="get">
+
+                    <input
+                        type="search"
+                        name="buscar"
+                        placeholder="Buscar por nombre o código..."
+                        aria-label="Buscar productos"
+                        value="{{ busqueda }}"
+                    >
+
+                    <select
+                        name="categoria"
+                        aria-label="Filtrar por categoría"
+                    >
+                        <option value="">
+                            Todas las categorías
+                        </option>
+
+                        {% for cat in categorias %}
+                        <option
+                            value="{{ cat }}"
+                            {% if cat == categoria_actual %}selected{% endif %}
+                        >
+                            {{ cat }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">
+                        Buscar
+                    </button>
+
+                    <a
+                        class="clear-link"
+                        href="{% url 'consultar_inventario' %}"
+                    >
+                        Limpiar
+                    </a>
+
+                </form>
+
+                <!-- Tabla de productos -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Stock total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for producto in productos %}
+
+                            <tr class="{% if seleccionado.codigo == producto.codigo %}selected-row{% endif %}">
+
+                                <td>{{ producto.codigo }}</td>
+
+                                <td>
+                                    <a
+                                        class="product-link"
+                                        href="{% url 'consultar_inventario' %}?producto={{ producto.codigo|urlencode }}&amp;buscar={{ busqueda|urlencode }}&amp;categoria={{ categoria_actual|urlencode }}"
+                                    >
+                                        {{ producto.nombre }}
+                                    </a>
+                                </td>
+
+                                <td>{{ producto.categoria }}</td>
+
+                                <td>{{ producto.stock }}</td>
+
+                                <td>
+                                    <span class="status">
+                                        {{ producto.estado }}
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                            {% empty %}
+
+                            <tr>
+                                <td colspan="5" class="empty-message">
+                                    No se encontraron productos.
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="footer">
+                    Mostrando {{ productos|length }} productos
+                </p>
+
+            </section>
+
+            <!-- PANEL DERECHO -->
+            <section class="panel">
+
+                <h2>Detalle del producto</h2>
+
+                {% if seleccionado %}
+
+                <div class="product-info">
+
+                    <h3>{{ seleccionado.nombre }}</h3>
+
+                    <p>
+                        Código: {{ seleccionado.codigo }}
+                    </p>
+
+                    <p>
+                        Categoría: {{ seleccionado.categoria }}
+                    </p>
+
+                    <!-- Resumen de existencias -->
+                    <div class="stock-summary">
+
+                        <div class="summary-box">
+                            Stock total
+                            <strong>
+                                {{ seleccionado.stock }}
+                            </strong>
+                            unidades
+                        </div>
+
+                        <div class="summary-box">
+                            Estado
+
+                            <p>
+                                <span class="status">
+                                    {{ seleccionado.estado }}
+                                </span>
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Lotes asociados -->
+                <div class="lots-section">
+
+                    <h3>Lotes del producto</h3>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código de lote</th>
+                                    <th>Vencimiento</th>
+                                    <th>Unidades</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for lote in seleccionado.lotes %}
+
+                                <tr>
+                                    <td>{{ lote.codigo }}</td>
+                                    <td>{{ lote.vencimiento }}</td>
+                                    <td>{{ lote.unidades }}</td>
+                                    <td>
+                                        <span class="status">
+                                            {{ lote.estado }}
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                {% empty %}
+
+                                <tr>
+                                    <td colspan="4" class="empty-message">
+                                        No hay lotes disponibles
+                                        para este producto.
+                                    </td>
+                                </tr>
+
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <p class="empty-message">
+                    No hay un producto seleccionado.
+                </p>
+
+                {% endif %}
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>
