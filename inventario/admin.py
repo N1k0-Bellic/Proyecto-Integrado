@@ -1,6 +1,9 @@
 from django.contrib import admin
 from .models import Categoria, Producto, UnidadMedida
 
+admin.site.index_title = "Administración de productos"
+admin.site.site_header = "Administración de Riza Tus Rizos"
+admin.site.site_title = "Riza Tus Rizos"
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
@@ -23,6 +26,7 @@ class ProductoAdmin(admin.ModelAdmin):
         "unidad_medida",
         "esta_activo",
         "fecha_creacion",
+        "stock",
     )
     list_filter = ("esta_activo", "categoria", "unidad_medida")
     search_fields = ("codigo", "nombre")

@@ -55,6 +55,9 @@ class Producto(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
 
+    # Cantidad disponible en inventario
+    stock = models.PositiveIntegerField(default=0, verbose_name="Stock actual")  
+
     class Meta:
         verbose_name = "Producto"
         verbose_name_plural = "Productos"
@@ -62,3 +65,10 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
+
+    def save(self, *args, **kwargs):
+        self.esta_activo = self.stock > 0
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {"esta_activo"}
+        super().save(*args, **kwargs)
