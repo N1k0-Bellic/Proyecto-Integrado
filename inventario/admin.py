@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Categoria, Producto, UnidadMedida
+from .models import Categoria, Producto, UnidadMedida, Lote
 
 admin.site.index_title = "Administración de productos"
 admin.site.site_header = "Administración de Riza Tus Rizos"
@@ -25,9 +25,24 @@ class ProductoAdmin(admin.ModelAdmin):
         "categoria",
         "unidad_medida",
         "esta_activo",
+        "estado",
         "fecha_creacion",
         "stock",
     )
     list_filter = ("esta_activo", "categoria", "unidad_medida")
     search_fields = ("codigo", "nombre")
     list_select_related = ("categoria", "unidad_medida")
+    readonly_fields = ("estado",)
+
+@admin.register(Lote)
+class LoteAdmin(admin.ModelAdmin):
+    list_display = (
+        "identificador",
+        "producto",
+        "existencias",
+        "fecha_vencimiento",
+        "estado",
+    )
+    list_filter = ("estado",)
+    search_fields = ("identificador", "producto__nombre")
+    list_select_related = ("producto",)
