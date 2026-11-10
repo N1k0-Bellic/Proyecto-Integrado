@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la categoría")
@@ -134,3 +135,19 @@ class Lote(models.Model):
         if update_fields is not None:
             kwargs["update_fields"] = set(update_fields) | {"estado"}
         super().save(*args, **kwargs)
+
+class MovimientoEntrada(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name='movimientos_entrada')
+    lote = models.ForeignKey(Lote, on_delete=models.PROTECT, related_name='movimientos_entrada', null=True, blank=True)
+    cantidad = models.PositiveIntegerField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    responsable = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='entradas_registradas')
+    observaciones = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Movimiento de Entrada"
+        verbose_name_plural = "Movimientos de Entrada"
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"Entrada #{self.id} - {self.producto.nombre} ({self.cantidad})"
