@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 UMBRAL_STOCK_BAJO = 10
 
@@ -30,7 +32,6 @@ class Categoria(models.Model):
 class UnidadMedida(models.Model):
     nombre = models.CharField(max_length=50, unique=True, verbose_name="Nombre de la unidad")
     simbolo = models.CharField(max_length=10, verbose_name="Símbolo")
-
     class Meta:
         verbose_name = "Unidad de medida"
         verbose_name_plural = "Unidades de medida"
@@ -124,6 +125,14 @@ class Lote(models.Model):
         self.actualizar_estado()
         _incluir_en_update_fields(kwargs, "estado")
         super().save(*args, **kwargs)
+
+
+@receiver(post_delete, sender=Lote)
+def descontar_stock_al_eliminar_lote(sender, instance, **kwargs):
+    producto = Producto.objects.filter(pk=instance.producto_id).first()
+    if producto:
+        producto.stock = max(0, producto.stock - instance.existencias)
+        producto.save(update_fields=["stock"])
 
 
 # ---------------------------------------------------------------------------

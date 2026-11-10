@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from .models import Categoria, Entrada, Lote, Producto, Salida, UnidadMedida
 
@@ -40,7 +42,6 @@ class LoteAdmin(admin.ModelAdmin):
 
 
 class MovimientoAdmin(admin.ModelAdmin):
-    """Configuración compartida por Entrada y Salida."""
     list_display = ("id", "producto", "lote", "cantidad", "fecha", "responsable")
     list_filter = ("fecha", "responsable")
     search_fields = ("producto__nombre", "lote__identificador")
@@ -50,7 +51,21 @@ class MovimientoAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_superuser
+
+    def get_actions(self, request):
+        acciones = super().get_actions(request)
+        acciones.pop("delete_selected", None)
+        return acciones
+
+    def delete_view(self, request, object_id, extra_context=None):
+        self.message_user(
+            request,
+            "Los movimientos no se eliminan directamente. Registra el movimiento contrario para corregir.",
+            level=messages.ERROR,
+        )
+        opts = self.model._meta
+        return redirect(reverse(f"admin:{opts.app_label}_{opts.model_name}_changelist"))
 
 
 @admin.register(Entrada)
