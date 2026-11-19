@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Lotes · Riza tus Rizos{% endblock %}
+
+{% block content %}
+    <h1>Gestión de Lotes</h1>
+    <p class="muted">Control de lotes, existencias y fechas de vencimiento.</p>
+
+    <div class="panel">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Producto</th>
+                        <th>Vencimiento</th>
+                        <th>Existencias</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lote in lotes %}
+                        <tr>
+                            <td>{{ lote.identificador }}</td>
+                            <td>{{ lote.producto.nombre }}</td>
+                            <td>{{ lote.fecha_vencimiento|date:"d/m/Y"|default:"Sin vencimiento" }}</td>
+                            <td>{{ lote.existencias }}</td>
+                            <td>{{ lote.get_estado_display }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="muted">No hay lotes registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

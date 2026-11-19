@@ -1,0 +1,51 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Riza tus Rizos · Gestión Interna{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/estilo.css' %}">
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="brand">
+            <img src="{% static 'css/img/logo.png' %}" alt="Riza tus Rizos">
+            <small>Gestión Interna</small>
+        </div>
+
+        <nav>
+            <a href="{% url 'producto_list' %}" class="{% if request.resolver_match.url_name in 'producto_list,producto_create,producto_update' %}active{% endif %}">◇ &nbsp; Productos / Inventario</a>
+        </nav>
+
+        <div class="profile">
+            <strong>Sandra · Salón</strong><br>
+            <span>Celular y PC · Tocopilla</span>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button type="button" class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+                <span class="muted" style="font-size: 12px; text-transform: uppercase;">Riza tus Rizos</span>
+            </div>
+            <div>
+                {% block header_actions %}{% endblock %}
+            </div>
+        </header>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert-msg">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

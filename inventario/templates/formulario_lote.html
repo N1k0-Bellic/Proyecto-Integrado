@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Formulario de Lote · Riza tus Rizos{% endblock %}
+
+{% block content %}
+    <h1>Registrar Lote</h1>
+    <p class="muted">Completa los datos del lote en una vista cómoda para celular y PC.</p>
+
+    <div class="panel" style="max-width: 640px;">
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="submit" class="btn-primary">Guardar Lote</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

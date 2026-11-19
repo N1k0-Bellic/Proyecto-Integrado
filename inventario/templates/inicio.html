@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard · Riza tus Rizos{% endblock %}
+
+{% block content %}
+    <h1>Panel Principal</h1>
+    <p class="muted">Vista general del inventario, alertas y atenciones del salón.</p>
+
+    <div class="cards">
+        <div class="card">
+            <span class="muted">Productos Activos</span>
+            <strong>{{ productos_activos|default:0 }}</strong>
+            <small class="muted">En catálogo</small>
+        </div>
+        <div class="card">
+            <span class="muted">Stock Disponible</span>
+            <strong>{{ stock_total|default:0 }}</strong>
+            <small class="muted">Unidades registradas</small>
+        </div>
+        <div class="card">
+            <span class="muted">Alertas de Vencimiento</span>
+            <strong style="color: var(--ochre);">{{ cantidad_alertas|default:0 }}</strong>
+            <small class="muted">Lotes próximos a vencer</small>
+        </div>
+    </div>
+{% endblock %}

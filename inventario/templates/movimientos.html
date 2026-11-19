@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Movimientos · Riza tus Rizos{% endblock %}
+
+{% block content %}
+    <h1>Movimientos de Inventario</h1>
+    <p class="muted">Registro de entradas y salidas de productos.</p>
+
+    <div class="panel" style="margin-bottom: 18px;">
+        <h2>Entradas</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Lote</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrada in entradas %}
+                        <tr>
+                            <td>{{ entrada.producto.nombre }}</td>
+                            <td>{{ entrada.lote.identificador|default:"-" }}</td>
+                            <td>+{{ entrada.cantidad }}</td>
+                            <td>{{ entrada.fecha|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="muted">Sin entradas registradas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Salidas</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Lote</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for salida in salidas %}
+                        <tr>
+                            <td>{{ salida.producto.nombre }}</td>
+                            <td>{{ salida.lote.identificador|default:"-" }}</td>
+                            <td>-{{ salida.cantidad }}</td>
+                            <td>{{ salida.fecha|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="muted">Sin salidas registradas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

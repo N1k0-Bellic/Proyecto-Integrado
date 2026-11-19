@@ -1,0 +1,71 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Productos · Riza tus Rizos{% endblock %}
+
+{% block header_actions %}
+    <a href="{% url 'producto_create' %}" class="btn-primary">+ Nuevo Producto</a>
+{% endblock %}
+
+{% block content %}
+    <h1>Productos e Inventario</h1>
+    <p class="muted">Revisa el catálogo, existencias y estado de cada producto.</p>
+
+    <div class="panel">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Unidad</th>
+                        <th>Stock</th>
+                        <th>Estado Stock</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                        <tr>
+                            <td>{{ producto.codigo }}</td>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.categoria.nombre }}</td>
+                            <td>{{ producto.unidad_medida.simbolo }}</td>
+                            <td>{{ producto.stock }}</td>
+                            <td>
+                                {% if producto.estado == 'disponible' %}
+                                    <span class="badge">{{ producto.get_estado_display }}</span>
+                                {% elif producto.estado == 'stock_bajo' %}
+                                    <span class="badge warn">{{ producto.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="badge bad">{{ producto.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if producto.esta_activo %}
+                                    <span class="badge">Activo</span>
+                                {% else %}
+                                    <span class="badge bad">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <a href="{% url 'producto_update' producto.pk %}" class="btn-secondary">Editar</a>
+                                <form method="POST" action="{% url 'producto_desactivar' producto.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-secondary">
+                                        {% if producto.esta_activo %}Desactivar{% else %}Activar{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="muted">No hay productos registrados todavía.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
