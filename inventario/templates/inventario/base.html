@@ -20,8 +20,8 @@
         </nav>
 
         <div class="profile">
-            <strong>Sandra  Ceron</strong><br>
-            <span>Salon · Tocopilla</span>
+            <strong>Sandra Ceron</strong><br>
+            <span>Salon - Tocopilla</span>
         </div>
     </aside>
 
@@ -36,10 +36,10 @@
             </div>
         </header>
 
-        {% if messages %}
+       {% if messages %}
             <div class="messages">
                 {% for message in messages %}
-                    <div class="alert-msg">{{ message }}</div>
+                    <div class="alert-msg {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
                 {% endfor %}
             </div>
         {% endif %}

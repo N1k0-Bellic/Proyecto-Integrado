@@ -45,10 +45,13 @@ class ProductoUpdateView(UpdateView):
 class ProductoDesactivarView(View):
     def post(self, request, pk, *args, **kwargs):
         producto = get_object_or_404(Producto, pk=pk)
-        # Cambia el estado a inactivo para conservar historial de movimientos
-        producto.esta_activo = not producto.esta_activo  # Alterna estado (Activar / Desactivar)
+        producto.esta_activo = not producto.esta_activo
         producto.save()
         
-        estado_str = "activado" if producto.esta_activo else "desactivado"
-        messages.info(request, f"El producto {producto.nombre} ha sido {estado_str}.")
+        if producto.esta_activo:
+            messages.success(request, f"El producto {producto.nombre} ha sido activado.")
+        else:
+            # warning o error suelen pintar el pop-up de amarillo/rojo en CSS
+            messages.error(request, f"El producto {producto.nombre} ha sido desactivado.")
+            
         return redirect('producto_list')

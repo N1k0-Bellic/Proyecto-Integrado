@@ -14,9 +14,6 @@ def _incluir_en_update_fields(kwargs, *campos):
         kwargs["update_fields"] = set(update_fields) | set(campos)
 
 
-# ---------------------------------------------------------------------------
-# Catálogos
-# ---------------------------------------------------------------------------
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre de la categoría")
@@ -40,9 +37,6 @@ class UnidadMedida(models.Model):
         return f"{self.nombre} ({self.simbolo})"
 
 
-# ---------------------------------------------------------------------------
-# Producto y Lote
-# ---------------------------------------------------------------------------
 
 class Producto(models.Model):
     class Estado(models.TextChoices):
@@ -75,7 +69,6 @@ class Producto(models.Model):
         return f"{self.codigo} - {self.nombre}"
 
     def actualizar_estado(self):
-        self.esta_activo = self.stock > 0
         if self.stock == 0:
             self.estado = self.Estado.SIN_STOCK
         elif self.stock >= UMBRAL_STOCK_BAJO:
@@ -85,7 +78,7 @@ class Producto(models.Model):
 
     def save(self, *args, **kwargs):
         self.actualizar_estado()
-        _incluir_en_update_fields(kwargs, "esta_activo", "estado")
+        _incluir_en_update_fields(kwargs, "estado")
         super().save(*args, **kwargs)
 
 
@@ -135,9 +128,6 @@ def descontar_stock_al_eliminar_lote(sender, instance, **kwargs):
         producto.save(update_fields=["stock"])
 
 
-# ---------------------------------------------------------------------------
-# Movimientos: Entrada y Salida
-# ---------------------------------------------------------------------------
 
 class Entrada(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="entradas")

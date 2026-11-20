@@ -301,3 +301,9 @@ th {
         cursor: pointer;
     }
 }
+
+.alert-msg.alert-error {
+    background-color: #fdecea;
+    border-color: #f5c2c7;
+    color: #842029;
+}
