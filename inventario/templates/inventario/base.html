@@ -16,8 +16,9 @@
         </div>
 
         <nav>
-            <a href="{% url 'inicio' %}" class="{% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">⌂ &nbsp; Inicio</a>
+            <a href="{% url 'inicio' %}" class="{% if request.resolver_match.url_name in 'inicio,home' %}active{% endif %}">⌂ &nbsp; Inicio</a>
             <a href="{% url 'producto_list' %}" class="{% if request.resolver_match.url_name in 'producto_list,producto_create,producto_update' %}active{% endif %}">◇ &nbsp; Productos / Inventario</a>
+            <a href="{% url 'lotes' %}" class="{% if request.resolver_match.url_name == 'lotes' %}active{% endif %}">❖ &nbsp; Lotes</a>
             <a href="{% url 'movimientos' %}" class="{% if request.resolver_match.url_name == 'movimientos' %}active{% endif %}">⇄ &nbsp; Movimientos</a>
         </nav>
 

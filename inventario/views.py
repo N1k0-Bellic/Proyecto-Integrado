@@ -88,7 +88,19 @@ class ProductoDesactivarView(View):
         return redirect('producto_list')
 
 
-# 5. Registro de Entradas y Salidas (Movimientos)
+# 5. Gestión de Lotes
+def lotes_view(request):
+    lotes = Lote.objects.select_related("producto").order_by("fecha_vencimiento", "identificador")
+    return render(
+        request,
+        "lotes.html",
+        {
+            "lotes": lotes,
+        },
+    )
+
+
+# 6. Registro de Entradas y Salidas (Movimientos)
 def _obtener_responsable(request):
     if request.user.is_authenticated:
         return request.user
