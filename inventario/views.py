@@ -1,11 +1,41 @@
+from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, View
-from .models import Producto, Lote, Entrada, Salida
 from .forms import ProductoForm
+from .models import Entrada, Lote, Producto, Salida
+
+
+# 0. Panel Principal / Inicio
+def inicio_view(request):
+    productos_activos = Producto.objects.filter(esta_activo=True).count()
+    stock_total = (
+        Producto.objects.filter(esta_activo=True).aggregate(total=Sum("stock"))["total"] or 0
+    )
+
+    hoy = timezone.now().date()
+    limite_alerta = hoy + timedelta(days=30)
+    cantidad_alertas = Lote.objects.filter(
+        fecha_vencimiento__isnull=False,
+        fecha_vencimiento__gte=hoy,
+        fecha_vencimiento__lte=limite_alerta,
+        existencias__gt=0,
+    ).count()
+
+    return render(
+        request,
+        "inicio.html",
+        {
+            "productos_activos": productos_activos,
+            "stock_total": stock_total,
+            "cantidad_alertas": cantidad_alertas,
+        },
+    )
 
 
 # 1. Listado de Productos
