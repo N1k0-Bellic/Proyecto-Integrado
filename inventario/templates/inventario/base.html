@@ -17,6 +17,7 @@
 
         <nav>
             <a href="{% url 'producto_list' %}" class="{% if request.resolver_match.url_name in 'producto_list,producto_create,producto_update' %}active{% endif %}">◇ &nbsp; Productos / Inventario</a>
+            <a href="{% url 'movimientos' %}" class="{% if request.resolver_match.url_name == 'movimientos' %}active{% endif %}">⇄ &nbsp; Movimientos</a>
         </nav>
 
         <div class="profile">
@@ -29,7 +30,7 @@
         <header>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button type="button" class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-                <span class="muted" style="font-size: 12px; text-transform: uppercase;">Riza tus Rizos</span>
+                <span class="muted" style="font-size: 12px; text-transform: uppercase;"> Riza tus Rizos</span>
             </div>
             <div>
                 {% block header_actions %}{% endblock %}

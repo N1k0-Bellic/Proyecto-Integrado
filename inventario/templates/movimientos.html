@@ -1,10 +1,63 @@
-{% extends 'base.html' %}
+{% extends 'inventario/base.html' %}
 
 {% block title %}Movimientos · Riza tus Rizos{% endblock %}
 
 {% block content %}
     <h1>Movimientos de Inventario</h1>
     <p class="muted">Registro de entradas y salidas de productos.</p>
+
+    <div class="panel" style="margin-bottom: 18px;">
+        <h2>Registrar movimiento</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label for="id_tipo">Tipo</label><br>
+                    <select name="tipo" id="id_tipo" required style="width: 100%; padding: 8px;">
+                        <option value="entrada">Entrada (+)</option>
+                        <option value="salida">Salida (-)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="id_producto">Producto</label><br>
+                    <select name="producto" id="id_producto" required style="width: 100%; padding: 8px;">
+                        <option value="">Selecciona un producto...</option>
+                        {% for producto in productos %}
+                            <option value="{{ producto.pk }}">
+                                {{ producto.codigo }} - {{ producto.nombre }} (Stock: {{ producto.stock }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="id_lote">Lote</label><br>
+                    <select name="lote" id="id_lote" required style="width: 100%; padding: 8px;">
+                        <option value="">Selecciona un lote...</option>
+                        {% for lote in lotes %}
+                            <option value="{{ lote.pk }}">
+                                {{ lote.identificador }} · {{ lote.producto.nombre }} (Disp: {{ lote.existencias }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="id_cantidad">Cantidad</label><br>
+                    <input type="number" name="cantidad" id="id_cantidad" min="1" required style="width: 100%; padding: 8px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label for="id_observaciones">Observaciones (opcional)</label><br>
+                <input type="text" name="observaciones" id="id_observaciones" placeholder="Ej. Compra, venta, ajuste..." style="width: 100%; padding: 8px;">
+            </div>
+
+            <button type="submit">Guardar movimiento</button>
+        </form>
+    </div>
 
     <div class="panel" style="margin-bottom: 18px;">
         <h2>Entradas</h2>
