@@ -88,14 +88,20 @@ class ProductoDesactivarView(View):
         return redirect('producto_list')
 
 
+
 # 5. Gestión de Lotes
 def lotes_view(request):
+    hoy = timezone.now().date()
+    limite_alerta = hoy + timedelta(days=30)
     lotes = Lote.objects.select_related("producto").order_by("fecha_vencimiento", "identificador")
+
     return render(
         request,
         "lotes.html",
         {
             "lotes": lotes,
+            "hoy": hoy,
+            "limite_alerta": limite_alerta,
         },
     )
 

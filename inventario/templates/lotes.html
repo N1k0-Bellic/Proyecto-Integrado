@@ -20,12 +20,38 @@
                 </thead>
                 <tbody>
                     {% for lote in lotes %}
-                        <tr>
-                            <td>{{ lote.identificador }}</td>
+                        {% if lote.fecha_vencimiento and lote.fecha_vencimiento < hoy %}
+                            <tr style="background-color: #fff7f6;">
+                        {% elif lote.fecha_vencimiento and lote.fecha_vencimiento >= hoy and lote.fecha_vencimiento <= limite_alerta and lote.existencias > 0 %}
+                            <tr style="background-color: #fffdf5;">
+                        {% else %}
+                            <tr>
+                        {% endif %}
+                            <td><strong>{{ lote.identificador }}</strong></td>
                             <td>{{ lote.producto.nombre }}</td>
-                            <td>{{ lote.fecha_vencimiento|date:"d/m/Y"|default:"Sin vencimiento" }}</td>
+                            <td>
+                                {% if lote.fecha_vencimiento %}
+                                    {% if lote.fecha_vencimiento < hoy %}
+                                        <span style="color: #9e382e; font-weight: 700;">{{ lote.fecha_vencimiento|date:"d/m/Y" }}</span>
+                                    {% elif lote.fecha_vencimiento >= hoy and lote.fecha_vencimiento <= limite_alerta and lote.existencias > 0 %}
+                                        <span style="color: #9b6b00; font-weight: 700;">{{ lote.fecha_vencimiento|date:"d/m/Y" }}</span>
+                                    {% else %}
+                                        {{ lote.fecha_vencimiento|date:"d/m/Y" }}
+                                    {% endif %}
+                                {% else %}
+                                    <span class="muted">Sin vencimiento</span>
+                                {% endif %}
+                            </td>
                             <td>{{ lote.existencias }}</td>
-                            <td>{{ lote.get_estado_display }}</td>
+                            <td>
+                                {% if lote.fecha_vencimiento and lote.fecha_vencimiento < hoy %}
+                                    <span class="badge bad">Vencido</span>
+                                {% elif lote.fecha_vencimiento and lote.fecha_vencimiento >= hoy and lote.fecha_vencimiento <= limite_alerta and lote.existencias > 0 %}
+                                    <span class="badge warn">⚠ Próximo a vencer</span>
+                                {% else %}
+                                    <span class="badge">{{ lote.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="5" class="muted">No hay lotes registrados.</td></tr>
