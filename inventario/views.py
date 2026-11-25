@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, View
 from .forms import ProductoForm
 from .models import Entrada, Lote, Producto, Salida
-
+from django.db.models import Q, Sum
 
 # 0. Panel Principal / Inicio
 def inicio_view(request):
@@ -46,7 +46,20 @@ class ProductoListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Producto.objects.all().select_related('categoria', 'unidad_medida')
+        queryset = Producto.objects.all().select_related('categoria', 'unidad_medida').order_by('nombre')
+        query = self.request.GET.get('q', '').strip()
+        if query:
+            queryset = queryset.filter(
+                Q(nombre__icontains=query)
+                | Q(codigo__icontains=query)
+                | Q(categoria__nombre__icontains=query)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '').strip()
+        return context
 
 
 # 2. Registro de Productos
