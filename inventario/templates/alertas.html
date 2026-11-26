@@ -1,37 +1,235 @@
-{% extends 'base.html' %}
 
-{% block title %}Alertas · Riza tus Rizos{% endblock %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Alertas de vencimiento | Riza tus Rizos</title>
 
-{% block content %}
-    <h1>Alertas de Vencimiento</h1>
-    <p class="muted">Lotes con existencias y fecha de vencimiento próxima.</p>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-    <div class="panel">
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Identificador</th>
-                        <th>Producto</th>
-                        <th>Vencimiento</th>
-                        <th>Existencias</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for lote in lotes %}
-                        <tr>
-                            <td>{{ lote.identificador }}</td>
-                            <td>{{ lote.producto.nombre }}</td>
-                            <td><span class="badge warn">{{ lote.fecha_vencimiento|date:"d/m/Y" }}</span></td>
-                            <td>{{ lote.existencias }}</td>
-                            <td>{{ lote.get_estado_display }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="5" class="muted">No hay alertas activas.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 35px;
+            color: #222;
+            background: #fff;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitulo {
+            color: #666;
+        }
+
+        .resumen {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tarjeta {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background: #f7f7f7;
+        }
+
+        .tarjeta strong {
+            display: block;
+            font-size: 28px;
+            margin-top: 12px;
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        .estado {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+
+        .vencido {
+            background: #f4dcdc;
+        }
+
+        .vence-hoy {
+            background: #fff0cc;
+        }
+
+        .proximo {
+            background: #fff6e3;
+        }
+
+        .vigente {
+            background: #e4f0e4;
+        }
+
+        .sin-fecha {
+            background: #eee;
+        }
+
+        .volver {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        @media (max-width: 800px) {
+            .resumen {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .resumen {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <a class="volver" href="{% url 'inicio' %}">
+        Volver al inicio
+    </a>
+
+    <header>
+        <h1>Alertas de vencimiento</h1>
+        <p class="subtitulo">
+            Riza tus Rizos — Control de lotes
+        </p>
+    </header>
+
+    <section class="resumen">
+        <div class="tarjeta">
+            Lotes vencidos
+            <strong>{{ resumen.vencidos }}</strong>
         </div>
+
+        <div class="tarjeta">
+            Vencen hoy
+            <strong>{{ resumen.vence_hoy }}</strong>
+        </div>
+
+        <div class="tarjeta">
+            Próximos a vencer
+            <strong>{{ resumen.proximos }}</strong>
+        </div>
+
+        <div class="tarjeta">
+            Sin fecha registrada
+            <strong>{{ resumen.sin_fecha }}</strong>
+        </div>
+    </section>
+
+    <h2>Estado de los lotes</h2>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Código lote</th>
+                    <th>Vencimiento</th>
+                    <th>Unidades</th>
+                    <th>Días restantes</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for alerta in alertas %}
+                <tr>
+                    <td>{{ alerta.producto }}</td>
+                    <td>{{ alerta.codigo_lote }}</td>
+
+                    <td>
+                        {% if alerta.fecha_vencimiento %}
+                            {{ alerta.fecha_vencimiento|date:"d/m/Y" }}
+                        {% else %}
+                            Sin registrar
+                        {% endif %}
+                    </td>
+
+                    <td>{{ alerta.existencias }}</td>
+
+                    <td>
+                        {% if alerta.dias_restantes is not None %}
+                            {{ alerta.dias_restantes }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if alerta.estado == "Vencido" %}
+                            <span class="estado vencido">
+                                Vencido
+                            </span>
+                        {% elif alerta.estado == "Vence hoy" %}
+                            <span class="estado vence-hoy">
+                                Vence hoy
+                            </span>
+                        {% elif alerta.estado == "Próximo a vencer" %}
+                            <span class="estado proximo">
+                                Próximo a vencer
+                            </span>
+                        {% elif alerta.estado == "Vigente" %}
+                            <span class="estado vigente">
+                                Vigente
+                            </span>
+                        {% else %}
+                            <span class="estado sin-fecha">
+                                Sin fecha
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        No existen lotes con existencias
+                        para consultar.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-{% endblock %}
+
+</body>
+</html>

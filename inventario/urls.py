@@ -16,4 +16,5 @@ urlpatterns = [
     path('productos/<int:pk>/desactivar/', ProductoDesactivarView.as_view(), name='producto_desactivar'),
     path('movimientos/', views.movimientos_view, name='movimientos'),
     path("lotes/", views.lotes_view, name="lotes"),
+    path("alertas/", views.alertas_view, name="alertas"),
 ]
