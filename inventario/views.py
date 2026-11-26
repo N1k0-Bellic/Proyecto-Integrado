@@ -2,14 +2,14 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, View
 from .forms import ProductoForm
 from .models import Entrada, Lote, Producto, Salida
-from django.db.models import Q, Sum
+from .servicios_vencimientos import consultar_alertas_vencimiento
 
 # 0. Panel Principal / Inicio
 def inicio_view(request):
@@ -36,7 +36,6 @@ def inicio_view(request):
             "cantidad_alertas": cantidad_alertas,
         },
     )
-
 
 # 1. Listado de Productos
 class ProductoListView(ListView):
@@ -115,6 +114,30 @@ def lotes_view(request):
             "lotes": lotes,
             "hoy": hoy,
             "limite_alerta": limite_alerta,
+        },
+    )
+
+
+# 6. Alertas de vencimiento
+def alertas_view(request):
+    alertas = consultar_alertas_vencimiento()
+    resumen = {
+        "vencidos": sum(alerta["estado"] == "Vencido" for alerta in alertas),
+        "vence_hoy": sum(alerta["estado"] == "Vence hoy" for alerta in alertas),
+        "proximos": sum(
+            alerta["estado"] == "Próximo a vencer" for alerta in alertas
+        ),
+        "sin_fecha": sum(
+            alerta["estado"] == "Sin fecha" for alerta in alertas
+        ),
+    }
+
+    return render(
+        request,
+        "alertas.html",
+        {
+            "alertas": alertas,
+            "resumen": resumen,
         },
     )
 
