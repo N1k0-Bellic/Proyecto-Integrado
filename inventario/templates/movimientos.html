@@ -8,15 +8,24 @@
 
     <div class="panel" style="margin-bottom: 18px;">
         <h2>Registrar movimiento</h2>
-        <form method="post">
+
+        {% if salida_form.non_field_errors %}
+            <div class="alert-msg">
+                {% for error in salida_form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate>
             {% csrf_token %}
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label for="id_tipo">Tipo</label><br>
                     <select name="tipo" id="id_tipo" required style="width: 100%; padding: 8px;">
-                        <option value="entrada">Entrada (+)</option>
-                        <option value="salida">Salida (-)</option>
+                        <option value="entrada" {% if request.POST.tipo == 'entrada' %}selected{% endif %}>Entrada (+)</option>
+                        <option value="salida" {% if request.POST.tipo == 'salida' %}selected{% endif %}>Salida (-)</option>
                     </select>
                 </div>
 
@@ -25,11 +34,14 @@
                     <select name="producto" id="id_producto" required style="width: 100%; padding: 8px;">
                         <option value="">Selecciona un producto...</option>
                         {% for producto in productos %}
-                            <option value="{{ producto.pk }}">
+                            <option value="{{ producto.pk }}" {% if salida_form.producto.value|stringformat:"s" == producto.pk|stringformat:"s" %}selected{% endif %}>
                                 {{ producto.codigo }} - {{ producto.nombre }} (Stock: {{ producto.stock }})
                             </option>
                         {% endfor %}
                     </select>
+                    {% for error in salida_form.producto.errors %}
+                        <small style="color: #b91c1c;">{{ error }}</small>
+                    {% endfor %}
                 </div>
 
                 <div>
@@ -37,22 +49,31 @@
                     <select name="lote" id="id_lote" required style="width: 100%; padding: 8px;">
                         <option value="">Selecciona un lote...</option>
                         {% for lote in lotes %}
-                            <option value="{{ lote.pk }}">
+                            <option value="{{ lote.pk }}" {% if salida_form.lote.value|stringformat:"s" == lote.pk|stringformat:"s" %}selected{% endif %}>
                                 {{ lote.identificador }} · {{ lote.producto.nombre }} (Disp: {{ lote.existencias }})
                             </option>
                         {% endfor %}
                     </select>
+                    {% for error in salida_form.lote.errors %}
+                        <small style="color: #b91c1c;">{{ error }}</small>
+                    {% endfor %}
                 </div>
 
                 <div>
                     <label for="id_cantidad">Cantidad</label><br>
-                    <input type="number" name="cantidad" id="id_cantidad" min="1" required style="width: 100%; padding: 8px;">
+                    <input type="number" name="cantidad" id="id_cantidad" min="1" value="{{ salida_form.cantidad.value|default:'' }}" required style="width: 100%; padding: 8px;">
+                    {% for error in salida_form.cantidad.errors %}
+                        <small style="color: #b91c1c;">{{ error }}</small>
+                    {% endfor %}
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
                 <label for="id_observaciones">Observaciones (opcional)</label><br>
-                <input type="text" name="observaciones" id="id_observaciones" placeholder="Ej. Compra, venta, ajuste..." style="width: 100%; padding: 8px;">
+                <input type="text" name="observaciones" id="id_observaciones" value="{{ salida_form.observaciones.value|default:'' }}" placeholder="Ej. Compra, venta, ajuste..." style="width: 100%; padding: 8px;">
+                {% for error in salida_form.observaciones.errors %}
+                    <small style="color: #b91c1c;">{{ error }}</small>
+                {% endfor %}
             </div>
 
             <button type="submit">Guardar movimiento</button>
