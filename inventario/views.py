@@ -126,8 +126,9 @@ def lotes_view(request):
     )
 
 # 7. Alertas de Lotes
+# 7. Alertas de Lotes
 def alertas_view(request):
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     limite_alerta = hoy + timedelta(days=30)
     query = request.GET.get("q", "").strip()
 
@@ -160,6 +161,7 @@ def alertas_view(request):
     for lote in lotes_qs:
         dias_restantes = (lote.fecha_vencimiento - hoy).days
         lote.dias_restantes = dias_restantes
+        lote.dias_vencido = abs(dias_restantes)
 
         if dias_restantes < 0:
             lote.alerta_tipo = "vencido"

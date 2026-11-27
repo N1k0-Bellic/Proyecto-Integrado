@@ -44,7 +44,19 @@
                             </td>
                             <td><strong>{{ lote.identificador }}</strong></td>
                             <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
-                            <td>{{ lote.dias_restantes }} días</td>
+                            <td>
+                                {% if lote.alerta_tipo == "vencido" %}
+                                    Vencido hace {{ lote.dias_vencido }} {% if lote.dias_vencido == 1 %}día{% else %}días{% endif %}
+                                {% elif lote.alerta_tipo == "hoy" %}
+                                    Vence hoy
+                                {% else %}
+                                    {% if lote.dias_restantes == 1 %}
+                                        Queda 1 día
+                                    {% else %}
+                                        Quedan {{ lote.dias_restantes }} días
+                                    {% endif %}
+                                {% endif %}
+                            </td>
                             <td>{{ lote.existencias }}</td>
                             <td>
                                 {% if lote.alerta_tipo == "vencido" %}
