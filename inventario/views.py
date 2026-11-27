@@ -129,32 +129,61 @@ def lotes_view(request):
 def alertas_view(request):
     hoy = timezone.now().date()
     limite_alerta = hoy + timedelta(days=30)
+    query = request.GET.get("q", "").strip()
 
-    lotes_vencidos = (
-        Lote.objects.select_related("producto")
-        .filter(fecha_vencimiento__isnull=False, fecha_vencimiento__lt=hoy)
-        .order_by("fecha_vencimiento", "identificador")
-    )
-
-    lotes_por_vencer = (
-        Lote.objects.select_related("producto")
+    lotes_qs = (
+        Lote.objects.select_related("producto", "producto__categoria")
+        .filter(fecha_vencimiento__isnull=False)
         .filter(
-            fecha_vencimiento__isnull=False,
-            fecha_vencimiento__gte=hoy,
-            fecha_vencimiento__lte=limite_alerta,
-            existencias__gt=0,
+            Q(fecha_vencimiento__lt=hoy)
+            | Q(
+                fecha_vencimiento__gte=hoy,
+                fecha_vencimiento__lte=limite_alerta,
+                existencias__gt=0,
+            )
         )
         .order_by("fecha_vencimiento", "identificador")
     )
+
+    if query:
+        lotes_qs = lotes_qs.filter(
+            Q(identificador__icontains=query)
+            | Q(producto__nombre__icontains=query)
+            | Q(producto__codigo__icontains=query)
+        )
+
+    lotes_alerta = []
+    vencidos_count = 0
+    vence_hoy_count = 0
+    por_vencer_count = 0
+
+    for lote in lotes_qs:
+        dias_restantes = (lote.fecha_vencimiento - hoy).days
+        lote.dias_restantes = dias_restantes
+
+        if dias_restantes < 0:
+            lote.alerta_tipo = "vencido"
+            vencidos_count += 1
+        elif dias_restantes == 0:
+            lote.alerta_tipo = "hoy"
+            vence_hoy_count += 1
+        else:
+            lote.alerta_tipo = "por_vencer"
+            por_vencer_count += 1
+
+        lotes_alerta.append(lote)
 
     return render(
         request,
         "alertas.html",
         {
-            "lotes_vencidos": lotes_vencidos,
-            "lotes_por_vencer": lotes_por_vencer,
+            "lotes": lotes_alerta,
             "hoy": hoy,
             "limite_alerta": limite_alerta,
+            "query": query,
+            "vencidos_count": vencidos_count,
+            "vence_hoy_count": vence_hoy_count,
+            "por_vencer_count": por_vencer_count,
         },
     )
 

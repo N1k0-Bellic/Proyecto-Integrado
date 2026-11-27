@@ -4,31 +4,68 @@
 
 {% block content %}
     <h1>Alertas de Vencimiento</h1>
-    <p class="muted">Lotes con existencias y fecha de vencimiento próxima.</p>
+    <p class="muted">Lotes vencidos y próximos a vencer (hasta {{ limite_alerta|date:"d/m/Y" }}).</p>
+
+    <div class="panel" style="margin-bottom: 16px;">
+        <form method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input
+                type="text"
+                name="q"
+                value="{{ query }}"
+                placeholder="Buscar por lote, producto o código..."
+                style="flex: 1; min-width: 240px;"
+            >
+            <button type="submit" class="btn-primary">Buscar</button>
+            {% if query %}
+                <a href="{% url 'alertas' %}" class="btn-secondary">Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
 
     <div class="panel">
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Identificador</th>
                         <th>Producto</th>
+                        <th>Lote</th>
                         <th>Vencimiento</th>
+                        <th>Días restantes</th>
                         <th>Existencias</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for lote in lotes %}
-                        <tr>
-                            <td>{{ lote.identificador }}</td>
-                            <td>{{ lote.producto.nombre }}</td>
-                            <td><span class="badge warn">{{ lote.fecha_vencimiento|date:"d/m/Y" }}</span></td>
+                        <tr {% if lote.alerta_tipo == "vencido" %}style="background-color: #fff7f6;"{% elif lote.alerta_tipo == "hoy" or lote.alerta_tipo == "por_vencer" %}style="background-color: #fffdf5;"{% endif %}>
+                            <td>
+                                <strong>{{ lote.producto.nombre }}</strong><br>
+                                <span class="muted" style="font-size: 12px;">{{ lote.producto.codigo }} · {{ lote.producto.categoria.nombre }}</span>
+                            </td>
+                            <td><strong>{{ lote.identificador }}</strong></td>
+                            <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
+                            <td>{{ lote.dias_restantes }} días</td>
                             <td>{{ lote.existencias }}</td>
-                            <td>{{ lote.get_estado_display }}</td>
+                            <td>
+                                {% if lote.alerta_tipo == "vencido" %}
+                                    <span class="badge bad">Vencido</span>
+                                {% elif lote.alerta_tipo == "hoy" %}
+                                    <span class="badge warn">Vence hoy</span>
+                                {% else %}
+                                    <span class="badge warn">⚠ Próximo a vencer</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="5" class="muted">No hay alertas activas.</td></tr>
+                        <tr>
+                            <td colspan="6" class="muted">
+                                {% if query %}
+                                    No se encontraron alertas que coincidan con "{{ query }}".
+                                {% else %}
+                                    No hay alertas activas.
+                                {% endif %}
+                            </td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
