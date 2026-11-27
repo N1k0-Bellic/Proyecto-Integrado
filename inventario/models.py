@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models import Sum
 from django.utils import timezone
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -115,17 +116,43 @@ class Lote(models.Model):
             self.estado = self.Estado.VIGENTE
 
     def save(self, *args, **kwargs):
-        self.actualizar_estado()
-        _incluir_en_update_fields(kwargs, "estado")
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            producto_anterior_id = None
+            if self.pk:
+                producto_anterior_id = (
+                    type(self).objects.filter(pk=self.pk)
+                    .values_list("producto_id", flat=True)
+                    .first()
+                )
+
+            self.actualizar_estado()
+            _incluir_en_update_fields(kwargs, "estado")
+            super().save(*args, **kwargs)
+
+            _sincronizar_stock_producto(self.producto_id)
+            if producto_anterior_id and producto_anterior_id != self.producto_id:
+                _sincronizar_stock_producto(producto_anterior_id)
+
+
+def _sincronizar_stock_producto(producto_id):
+    with transaction.atomic():
+        producto = Producto.objects.select_for_update().filter(pk=producto_id).first()
+        if producto is None:
+            return
+
+        existencias = (
+            Lote.objects.filter(producto_id=producto_id)
+            .aggregate(total=Sum("existencias"))["total"]
+            or 0
+        )
+        if producto.stock != existencias:
+            producto.stock = existencias
+            producto.save(update_fields=["stock"])
 
 
 @receiver(post_delete, sender=Lote)
-def descontar_stock_al_eliminar_lote(sender, instance, **kwargs):
-    producto = Producto.objects.filter(pk=instance.producto_id).first()
-    if producto:
-        producto.stock = max(0, producto.stock - instance.existencias)
-        producto.save(update_fields=["stock"])
+def sincronizar_stock_al_eliminar_lote(sender, instance, **kwargs):
+    _sincronizar_stock_producto(instance.producto_id)
 
 
 
@@ -164,11 +191,8 @@ class Entrada(models.Model):
         self.full_clean()
         with transaction.atomic():
             lote = Lote.objects.select_for_update().get(pk=self.lote_id)
-            producto = Producto.objects.select_for_update().get(pk=self.producto_id)
             lote.existencias += self.cantidad
-            producto.stock += self.cantidad
             lote.save(update_fields=["existencias"])
-            producto.save(update_fields=["stock"])
             super().save(*args, **kwargs)
 
 
@@ -222,7 +246,5 @@ class Salida(models.Model):
             producto = Producto.objects.select_for_update().get(pk=self.producto_id)
             self._validar_stock(lote, producto)
             lote.existencias -= self.cantidad
-            producto.stock -= self.cantidad
             lote.save(update_fields=["existencias"])
-            producto.save(update_fields=["stock"])
             super().save(*args, **kwargs)
