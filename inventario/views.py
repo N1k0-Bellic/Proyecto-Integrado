@@ -105,7 +105,14 @@ class ProductoDesactivarView(View):
 def lotes_view(request):
     hoy = timezone.now().date()
     limite_alerta = hoy + timedelta(days=30)
+    query = request.GET.get("q", "").strip()
+
     lotes = Lote.objects.select_related("producto").order_by("fecha_vencimiento", "identificador")
+    if query:
+        lotes = lotes.filter(
+            Q(identificador__icontains=query)
+            | Q(producto__nombre__icontains=query)
+        )
 
     return render(
         request,
@@ -114,6 +121,7 @@ def lotes_view(request):
             "lotes": lotes,
             "hoy": hoy,
             "limite_alerta": limite_alerta,
+            "query": query,
         },
     )
 

@@ -6,6 +6,22 @@
     <h1>Gestión de Lotes</h1>
     <p class="muted">Control de lotes, existencias y fechas de vencimiento.</p>
 
+    <div class="panel" style="margin-bottom: 16px;">
+        <form method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input
+                type="text"
+                name="q"
+                value="{{ query }}"
+                placeholder="Buscar por identificador o producto..."
+                style="flex: 1; min-width: 240px;"
+            >
+            <button type="submit" class="btn-primary">Buscar</button>
+            {% if query %}
+                <a href="{% url 'lotes' %}" class="btn-secondary">Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
+
     <div class="panel">
         <div class="table-wrap">
             <table>
@@ -54,7 +70,15 @@
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="5" class="muted">No hay lotes registrados.</td></tr>
+                        <tr>
+                            <td colspan="5" class="muted">
+                                {% if query %}
+                                    No se encontraron lotes para "{{ query }}".
+                                {% else %}
+                                    No hay lotes registrados.
+                                {% endif %}
+                            </td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
