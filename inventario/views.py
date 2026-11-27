@@ -125,6 +125,39 @@ def lotes_view(request):
         },
     )
 
+# 7. Alertas de Lotes
+def alertas_view(request):
+    hoy = timezone.now().date()
+    limite_alerta = hoy + timedelta(days=30)
+
+    lotes_vencidos = (
+        Lote.objects.select_related("producto")
+        .filter(fecha_vencimiento__isnull=False, fecha_vencimiento__lt=hoy)
+        .order_by("fecha_vencimiento", "identificador")
+    )
+
+    lotes_por_vencer = (
+        Lote.objects.select_related("producto")
+        .filter(
+            fecha_vencimiento__isnull=False,
+            fecha_vencimiento__gte=hoy,
+            fecha_vencimiento__lte=limite_alerta,
+            existencias__gt=0,
+        )
+        .order_by("fecha_vencimiento", "identificador")
+    )
+
+    return render(
+        request,
+        "alertas.html",
+        {
+            "lotes_vencidos": lotes_vencidos,
+            "lotes_por_vencer": lotes_por_vencer,
+            "hoy": hoy,
+            "limite_alerta": limite_alerta,
+        },
+    )
+
 
 # 6. Registro de Entradas y Salidas (Movimientos)
 def _obtener_responsable(request):
