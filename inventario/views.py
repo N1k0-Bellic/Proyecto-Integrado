@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, View
 from .forms import ProductoForm, SalidaForm
 from .models import Entrada, Lote, Producto, Salida
+from .servicios_vencimientos import clasificar_vencimiento
 
 
 # 0. Panel Principal / Inicio
@@ -18,11 +19,12 @@ def inicio_view(request):
         Producto.objects.filter(esta_activo=True).aggregate(total=Sum("stock"))["total"] or 0
     )
 
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     limite_alerta = hoy + timedelta(days=30)
+    
+    # Contamos alertas activas (lotes vencidos, vencen hoy o próximos hasta 30 días con existencias)
     cantidad_alertas = Lote.objects.filter(
         fecha_vencimiento__isnull=False,
-        fecha_vencimiento__gte=hoy,
         fecha_vencimiento__lte=limite_alerta,
         existencias__gt=0,
     ).count()
@@ -103,7 +105,7 @@ class ProductoDesactivarView(View):
 
 # 5. Gestión de Lotes
 def lotes_view(request):
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     limite_alerta = hoy + timedelta(days=30)
     query = request.GET.get("q", "").strip()
 
@@ -126,23 +128,16 @@ def lotes_view(request):
     )
 
 # 7. Alertas de Lotes
-# 7. Alertas de Lotes
 def alertas_view(request):
     hoy = timezone.localdate()
     limite_alerta = hoy + timedelta(days=30)
+
     query = request.GET.get("q", "").strip()
+    estado_filtro = request.GET.get("estado", "").strip()
 
     lotes_qs = (
         Lote.objects.select_related("producto", "producto__categoria")
         .filter(fecha_vencimiento__isnull=False)
-        .filter(
-            Q(fecha_vencimiento__lt=hoy)
-            | Q(
-                fecha_vencimiento__gte=hoy,
-                fecha_vencimiento__lte=limite_alerta,
-                existencias__gt=0,
-            )
-        )
         .order_by("fecha_vencimiento", "identificador")
     )
 
@@ -153,27 +148,49 @@ def alertas_view(request):
             | Q(producto__codigo__icontains=query)
         )
 
+    mapa_tipo = {
+        "Vencido": "vencido",
+        "Vence hoy": "hoy",
+        "Próximo a vencer": "por_vencer",
+        "Vigente": "vigente",
+    }
+
     lotes_alerta = []
     vencidos_count = 0
     vence_hoy_count = 0
     por_vencer_count = 0
+    sin_fecha_count = Lote.objects.filter(fecha_vencimiento__isnull=True).count()
 
     for lote in lotes_qs:
-        dias_restantes = (lote.fecha_vencimiento - hoy).days
-        lote.dias_restantes = dias_restantes
-        lote.dias_vencido = abs(dias_restantes)
+        resultado = clasificar_vencimiento(lote.fecha_vencimiento, hoy)
+        dias_restantes = resultado["dias_restantes"]
+        tipo = mapa_tipo.get(resultado["estado"], "vigente")
 
-        if dias_restantes < 0:
-            lote.alerta_tipo = "vencido"
+        # Si está próximo a vencer pero no tiene existencias, no lo tratamos como alerta activa
+        if tipo == "por_vencer" and lote.existencias <= 0:
+            tipo = "vigente"
+
+        lote.dias_restantes = dias_restantes
+        lote.dias_vencido = abs(dias_restantes) if dias_restantes is not None else 0
+        lote.alerta_tipo = tipo
+
+        if tipo == "vencido":
             vencidos_count += 1
-        elif dias_restantes == 0:
-            lote.alerta_tipo = "hoy"
+        elif tipo == "hoy":
             vence_hoy_count += 1
-        else:
-            lote.alerta_tipo = "por_vencer"
+        elif tipo == "por_vencer":
             por_vencer_count += 1
 
-        lotes_alerta.append(lote)
+        if tipo in ["vencido", "hoy", "por_vencer"]:
+            if not estado_filtro or estado_filtro == tipo:
+                lotes_alerta.append(lote)
+
+    resumen = {
+        "vencidos": vencidos_count,
+        "vence_hoy": vence_hoy_count,
+        "proximos": por_vencer_count,
+        "sin_fecha": sin_fecha_count,
+    }
 
     return render(
         request,
@@ -183,9 +200,8 @@ def alertas_view(request):
             "hoy": hoy,
             "limite_alerta": limite_alerta,
             "query": query,
-            "vencidos_count": vencidos_count,
-            "vence_hoy_count": vence_hoy_count,
-            "por_vencer_count": por_vencer_count,
+            "estado_filtro": estado_filtro,
+            "resumen": resumen,
         },
     )
 
